@@ -1,4 +1,3 @@
-
 /**
  * MulticastPeer: Implementa um peer multicast
  * Descricao: Envia mensagens para todos os membros do grupo.
@@ -41,6 +40,7 @@ public class MulticastPeer {
 	public static void main(String args[]) throws Exception {
 		/* args[0]: ip multicast (entre 224.0.0.0 e 239.255.255.255 */
 		MulticastSocket s = null;
+		DatagramSocket ds = null;
 		InetAddress group = null;
 		int resp = 0;
 
@@ -71,41 +71,43 @@ public class MulticastPeer {
 
 			do {
 				message = JOptionPane.showInputDialog("Mensagem?");
+				if(message == null){
+					obj = MulticastPeer.serializacao(new Mensagem((byte) 5, source , "", source.length(), 0));
+
+					DatagramPacket mensagemOut = new DatagramPacket(obj,obj.length, group,6789);
+					s.send(mensagemOut);
+
+					/* retira-se do grupo */
+					s.leaveGroup(group);
+				
+					return;
+				}
 
 				/* cria um datagrama com a msg */
-				type = (byte) 3;
-				// byte[] m = message.getBytes();
-
-				// baos = new ByteArrayOutputStream();
-				// oos = new ObjectOutputStream(baos);
-				// oos.writeObject(new Mensagem(type, source, message, source.length(), message.length()));
-				// oos.close();
-				// oos.flush();
-
-				// obj = baos.toByteArray();
-				// baos.close();
-
-				// DatagramPacket messageOut = new DatagramPacket(obj, obj.length, group, 6789);
+				obj = MulticastPeer.serializacao(new Mensagem((byte) 3, source , message, source.length(), message.length()));
+				DatagramPacket messageOut = new DatagramPacket(obj, obj.length, group, 6789);
 
 				/* envia o datagrama como multicast */
-				// s.send(messageOut);
+				s.send(messageOut);
 
 				resp = JOptionPane.showConfirmDialog(null, "Nova mensagem?", "Continuar", JOptionPane.YES_NO_OPTION);
 			} while (resp != JOptionPane.NO_OPTION);
 
-			// type = (byte)5;
-			// message = "";
-			// oos.writeObject(new Mensagem(type, source, message, source.length(),
-			// message.length()));
-			// DatagramPacket mensagemOut = new DatagramPacket(obj,obj.length, group,6789);
-			// s.send(mensagemOut);
-			// /* retira-se do grupo */
-			// s.leaveGroup(group);
+			// Ao digitar que não deseja mais mandar mensagens, usuario sai do grupo
+			obj = MulticastPeer.serializacao(new Mensagem((byte) 5, source , "", source.length(), 0));
+
+			DatagramPacket mensagemOut = new DatagramPacket(obj,obj.length, group,6789);
+			s.send(mensagemOut);
+
+			/* retira-se do grupo */
+			s.leaveGroup(group);
+			// receiveThread.interrupt();
 		} catch (SocketException e) {
 			System.out.println("Socket: " + e.getMessage());
 		} catch (IOException e) {
 			System.out.println("IO: " + e.getMessage());
 		} finally {
+			
 			if (s != null)
 				s.close();
 		} // finally
@@ -115,14 +117,13 @@ public class MulticastPeer {
 class ReceiveThread extends Thread {
 	MulticastSocket multicastSocket = null;
 	InetAddress group;
-	int flag = 0;
+	boolean flag = false;
 	List<String> lista = new ArrayList<String>();
 
 	public ReceiveThread(MulticastSocket multicastSocket, InetAddress group) {
 		this.multicastSocket = multicastSocket;
 		this.group = group;
 	}
-
 
 	public void run() {
 		try {
@@ -133,60 +134,47 @@ class ReceiveThread extends Thread {
 
 				Mensagem objDescerializado = MulticastPeer.descerializacao(messageIn);
 				
-				switch (objDescerializado.getType()) {
-					case 1:
+				if(objDescerializado.getType() == (byte)1) {
 					System.out.println("case one");
-					
-						// Retorna a pessoa que entrou no chat
-						System.out.println("Join: " + objDescerializado.getSource());
-						// Envia joinack como resposta para acrescentar usuário adicionado nas listas dos ativos dos outros usuários
-						String message = "";
-						byte[] obj = MulticastPeer.serializacao(new Mensagem((byte) 2, MulticastPeer.source , message, MulticastPeer.source.length(), message.length()));
-						DatagramPacket messageOut = new DatagramPacket(obj, obj.length, group, 6789);
-						
-						lista.add(objDescerializado.getSource());
-						System.out.println("aaaaaaaaaaa "+lista);
 
-						multicastSocket.send(messageOut);
-						break;
-
-					case 2:
-					System.out.println("case two");
-					System.out.println("lista tamanho: " + lista.size());
-					System.out.println(lista);
-					
-					int contador = 0;
-						for (String item : lista) {
-							if (item.equals(MulticastPeer.source)){
-								contador += 1; 
+							if(flag == false){ 
+								MulticastPeer.source = objDescerializado.getSource(); //Adiciona o apelido do usuário em uma variavel global
+								flag = true;
 							}
-						}
-					System.out.println("contador: " + contador);
-					System.out.println("source: "+ objDescerializado.getSource());
-						
-						//Função utilizada para atualizar a lista do usuario que entrou
-						if(contador == 0 && flag == 1){
+
+							System.out.println("Join: " + objDescerializado.getSource()); //Join de novo usuário
 							lista.add(objDescerializado.getSource());
-							System.out.println("flag 1 "+lista);
-							flag = 0;
+							System.out.println(lista);
+
+								System.out.println("Joinack: " + MulticastPeer.source); //Join de novo usuário
+								String message = "";
+								byte[] obj = MulticastPeer.serializacao(new Mensagem((byte)2, MulticastPeer.source , message, MulticastPeer.source.length(), message.length()));
+								DatagramPacket messageOut = new DatagramPacket(obj, obj.length, group, 6789);
+								multicastSocket.send(messageOut);
 						}
-						else if(contador == 0){
-							System.out.println("JOINACK " + objDescerializado.getSource());
-							lista.add(objDescerializado.getSource());
-							flag = 1;
-							// Pacote para atualização da lista do usuário adicionado
-							obj = MulticastPeer.serializacao(new Mensagem((byte) 2,MulticastPeer.source,"",MulticastPeer.source.length(),0)); //Java não define escopo da variavel pelo switch case, estranho
-						  messageOut = new DatagramPacket(obj, obj.length, group, 6789);
-							multicastSocket.send(messageOut);
-							System.out.println("cntd = 0 " + lista);
-						}
-						break;
-					case 3:
-						System.out.println("MSG " + objDescerializado.getSource() + " " + objDescerializado.getMessage());
-						// MulticastPeer.lista.add(objDescerializado.getSource());
-						// case 5:
-						// System.out.println("LEAVE " + objDescerializado.getSource());
-					
+				
+				if(objDescerializado.getType() == (byte)2) {
+					Boolean verificacao = false;
+					System.out.println("case two");
+					// System.out.println("objeto "+objDescerializado.getSource());
+					// System.out.println("meu nome " +MulticastPeer.source);
+					for (String item : lista) {
+							if(objDescerializado.getSource().equals(item) == true){
+								verificacao = true;
+							}	
+					}
+					if(verificacao != true){
+						lista.add(objDescerializado.getSource());
+					}
+					System.out.println(lista);
+				}
+				if(objDescerializado.getType() == (byte)3){
+					System.out.println("MSG " + objDescerializado.getSource()+ " " + objDescerializado.getMessage());
+				}
+				if(objDescerializado.getType() == (byte)5){
+					System.out.println("LEAVE " + objDescerializado.getSource());
+					lista.remove(objDescerializado.getSource());
+					System.out.println(lista);
 				}
 			}
 		} catch (Exception e) {
