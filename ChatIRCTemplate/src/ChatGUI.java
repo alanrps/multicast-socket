@@ -357,18 +357,17 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
         }
     } //writeLocalMessage
 
-    // public void writeMessageFrom(String id, String mensagem) {
-    //     try {
-    //         styledDoc.insertString(styledDoc.getLength(), "<" + id + "> ", blueStyle);
-    //         styledDoc.insertString(styledDoc.getLength(), mensagem + "\n", blackStyle);
-    //         styledDoc.insertString(styledDoc.getLength(), "<" + id + "> ", blueStyle);
-    //         styledDoc.insertString(styledDoc.getLength(), mensagem + "\n", blackStyle);
-    //         areaMensagem.setCaretPosition(areaMensagem.getText().length());
-    //     } 
-    //     catch (BadLocationException ble) {
-    //         System.err.println("Erro ao escrever mensagem na UI" + ble);
-    //     }
-    // }
+    public void writeMessageFrom(String from, String mensagem) {
+        try {
+            styledDoc.insertString(styledDoc.getLength(), "MSGIDV FROM ", blueStyle);
+            styledDoc.insertString(styledDoc.getLength(), from + "TO" + getApelido(), blackStyle);
+            styledDoc.insertString(styledDoc.getLength(), mensagem , blueStyle);
+            areaMensagem.setCaretPosition(areaMensagem.getText().length());
+        } 
+        catch (BadLocationException ble) {
+            System.err.println("Erro ao escrever mensagem na UI" + ble);
+        }
+    }
 
     /**
      * Adiciona um apelido na lista
