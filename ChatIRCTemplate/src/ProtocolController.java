@@ -62,31 +62,50 @@ public class ProtocolController {
     }
 
     public void send(String targetUser, String msg) throws IOException {
+        if(msg.equals("Todos")){
+            sendMessageGroup(new Message((byte)3, nick, msg));
+        }else{
+            onlineUsers.containsKey(targetUser);
+            InetAddress target = onlineUsers.get(targetUser);
+            sendMessage(new Message((byte)4, nick, msg), target);
+        }
+    }
+
+    private void sendMessageGroup(Message msg) throws IOException {
+        byte[] msgBytes = serializacao(msg);
+        processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
+    }
+
+    private void sendMessage(Message msg, InetAddress target) throws IOException {
+        byte[] msgBytes = serializacao(msg);
+        processPacket(new DatagramPacket(msgBytes, msgBytes.length, target, 6799));
+    }   
+
+    public void joinack(String apelido) throws IOException {
         // Pacote para multicast
-        byte[] msgBytes = serializacao(new Message((byte)3, nick, msg));
+        Boolean resposta = onlineUsers.containsKey(nick);
+        if(resposta != true){
+            onlineUsers.put(nick, group);
+        }
+        byte[] msgBytes = serializacao(new Message((byte)2, apelido, ""));
+        processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
+    }
+
+    public void join() throws IOException {
+        multicastSocket.setLoopbackMode(false);
+        multicastSocket.joinGroup(group);
+        Boolean resposta = onlineUsers.containsKey(nick);
+        if(resposta != true){
+            onlineUsers.put(nick, group);
+        }
+        byte[] msgBytes = serializacao(new Message((byte)1, nick, ""));
         processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
         
     }
 
-    private void sendMessageGroup(Message msg) throws IOException {
-        // byte[] msgByte = msg.getBytes();
-        // multicastSocket.send(new DatagramPacket(msg, msg.length, group, 6789));
-    }
-
-    private void sendMessage(Message msg, InetAddress target) throws IOException {
-
-    }
-
-    public void join() throws IOException {
-        System.out.println("JOIN");
-        // multicastSocket.setLoopbackMode(false);//
-        multicastSocket.joinGroup(group);
-        byte[] msgBytes = serializacao(new Message((byte)1, nick, ""));
-        // byte[] msgBytes = msg.getBytes();
-        processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
-    }
-
     public void leave() throws IOException {
+        byte[] msgBytes = serializacao(new Message((byte)5, nick, ""));
+        processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
     }
 
     public void close() throws IOException {
@@ -94,7 +113,7 @@ public class ProtocolController {
             udpSocket.close();
         if (multicastSocket != null)
             multicastSocket.close();
-    }
+        }
 
     public void processPacket(DatagramPacket p) throws IOException {
         System.out.println("envio pacote");
@@ -105,16 +124,29 @@ public class ProtocolController {
         try {
             byte[] buffer = new byte[1000];
             DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length, group, 6789);
-            multicastSocket.receive(messageIn);
+            // udpSocket.
 
             Message objDescerializado = descerializacao(messageIn);
             System.out.println(objDescerializado.getSource());
-            ChatGUI chat = new ChatGUI();
-            chat.update(objDescerializado);
+
+            ui.update(objDescerializado);
+
         } catch (ClassNotFoundException e) {
             System.out.println("erro");
         }
     }
     public void receiveUdpPacket() throws IOException {
+        try {
+            byte[] buffer = new byte[1000];
+            DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length, group, 6799);
+            udpSocket.receive(messageIn);
+            
+            Message objDescerializado = descerializacao(messageIn);
+            System.out.println(objDescerializado.getSource());
+            ui.update(objDescerializado);
+
+        } catch (ClassNotFoundException e) {
+            System.out.println("erro");
+        }
     }
 }

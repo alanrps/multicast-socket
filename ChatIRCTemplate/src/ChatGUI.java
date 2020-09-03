@@ -8,7 +8,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.net.*;
+import java.net.DatagramPacket;
 import java.security.acl.Group;
+import java.net.InetAddress;
 import java.util.*;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
@@ -163,7 +165,7 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
         pnlOpcoes.add(txtPorta, gridBagConstraints);
 
         txtApelido.setColumns(10);
-        txtApelido.setText("campiolo");
+        txtApelido.setText("");
         txtApelido.setMinimumSize(new java.awt.Dimension(114, 19));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
@@ -250,7 +252,6 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
 
             listener.run();
             protoController.join();
-            
             /* juntar-se ao grupo e inicializar o recebimento de mensagens */
             //TODO
 
@@ -298,14 +299,14 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
         if ((msg.trim().length() > 0) && (lstLista.getSelectedIndex() != -1)) {
             /* obtem o apelido do destinatario */
             String nickTarget = (String)lstLista.getSelectedValue();
-
+            
+            System.out.println(nickTarget);
             try{
-                protoController.send("", msg);
+                protoController.send(nickTarget, msg);
             }catch(IOException e){
                 System.out.println("Exception mensagem");
             }
 
-            
             /** Implementar o enviar para o grupo ou individuo HERE */
                 //TODO
 
@@ -318,7 +319,7 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
     }//GEN-LAST:event_btnEnviarActionPerformed
 
     /** Fechar a aplicação **/
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+    private void formWindowClosing(java.awt.event.WindowEvent evt){//GEN-FIRST:event_formWindowClosing
         this.btnDesconectarActionPerformed(null);
     }//GEN-LAST:event_formWindowClosing
 
@@ -349,7 +350,6 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
         try {
             styledDoc.insertString(styledDoc.getLength(), "<" + id + "> ", blueStyle);
             styledDoc.insertString(styledDoc.getLength(), mensagem + "\n", blackStyle);
-
             areaMensagem.setCaretPosition(areaMensagem.getText().length());
         } 
         catch (BadLocationException ble) {
@@ -357,12 +357,26 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
         }
     } //writeLocalMessage
 
+    // public void writeMessageFrom(String id, String mensagem) {
+    //     try {
+    //         styledDoc.insertString(styledDoc.getLength(), "<" + id + "> ", blueStyle);
+    //         styledDoc.insertString(styledDoc.getLength(), mensagem + "\n", blackStyle);
+    //         styledDoc.insertString(styledDoc.getLength(), "<" + id + "> ", blueStyle);
+    //         styledDoc.insertString(styledDoc.getLength(), mensagem + "\n", blackStyle);
+    //         areaMensagem.setCaretPosition(areaMensagem.getText().length());
+    //     } 
+    //     catch (BadLocationException ble) {
+    //         System.err.println("Erro ao escrever mensagem na UI" + ble);
+    //     }
+    // }
+
     /**
      * Adiciona um apelido na lista
      * @param apelido 
      */
     public void addNickname(String apelido) {
             modelList.addElement(apelido);
+        System.out.println(modelList);
     } //addNickname
 
     /**
@@ -387,23 +401,35 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
         System.out.println(m.getType());
         switch (m.getType()) {
             case 1:
-                System.out.println("1");
                 writeLocalMessage("JOIN", m.getSource()); // JOIN [apelido]
-                this.addNickname(m.getSource()); //Adiciona o nome na lista
-                // byte[] msgBytes = protoController.serializacao(new Message((byte)2, m.getSource(),""));
-                // protoController.processPacket(new DatagramPacket(msgBytes, msgBytes.length, protoController.get, 6789))
+                Boolean verificacao = modelList.contains(m.getSource());
+                if(verificacao != true){
+                    this.addNickname(m.getSource());
+                }
+
+                try {
+                    protoController.joinack(getApelido());
+                
+                } catch (Exception e) {
+                    //TODO: handle exception
+                }
                 break;
             case 2:
-                this.addNickname(m.getSource());
+                writeLocalMessage("JOINACK", getApelido()); // JOIN [apelido]
+                verificacao = modelList.contains(m.getSource());
+                if(verificacao != true){
+                    this.addNickname(m.getSource());
+                }
                 break;
             case 3:
-                this.writeMessage(m.getSource(), m.getMessage());
+                this.writeLocalMessage(m.getSource(), m.getMessage()); //writeMessage
                 break;
             case 4:
-                System.out.println("4 PORRA");
+                
                 this.writeMessage(m.getSource(), m.getMessage());
                 break;
             case 5:
+                this.writeMessage("LEAVE", m.getSource());
                 this.remNickname(m.getSource());
                 break;
         }
