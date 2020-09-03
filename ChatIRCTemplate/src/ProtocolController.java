@@ -62,6 +62,7 @@ public class ProtocolController {
     }
 
     public void send(String targetUser, String msg) throws IOException {
+        // Pacote para multicast
         byte[] msgBytes = serializacao(new Message((byte)3, nick, msg));
         processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
         
@@ -80,9 +81,8 @@ public class ProtocolController {
         System.out.println("JOIN");
         // multicastSocket.setLoopbackMode(false);//
         multicastSocket.joinGroup(group);
-        byte[] msgBytes = serializacao(new Message((byte) 1, nick, ""));
+        byte[] msgBytes = serializacao(new Message((byte)1, nick, ""));
         // byte[] msgBytes = msg.getBytes();
-        System.out.println(msgBytes);
         processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
     }
 

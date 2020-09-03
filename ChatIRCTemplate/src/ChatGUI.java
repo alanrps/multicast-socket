@@ -387,16 +387,20 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
         System.out.println(m.getType());
         switch (m.getType()) {
             case 1:
-            System.out.println("1 PORRA");
-                this.addNickname(m.getSource());
+                System.out.println("1");
+                writeLocalMessage("JOIN", m.getSource()); // JOIN [apelido]
+                this.addNickname(m.getSource()); //Adiciona o nome na lista
+                // byte[] msgBytes = protoController.serializacao(new Message((byte)2, m.getSource(),""));
+                // protoController.processPacket(new DatagramPacket(msgBytes, msgBytes.length, protoController.get, 6789))
                 break;
             case 2:
                 this.addNickname(m.getSource());
                 break;
             case 3:
+                this.writeMessage(m.getSource(), m.getMessage());
+                break;
             case 4:
-            System.out.println("4 PORRA");
-
+                System.out.println("4 PORRA");
                 this.writeMessage(m.getSource(), m.getMessage());
                 break;
             case 5:
