@@ -405,7 +405,6 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
                 if(verificacao != true){
                     this.addNickname(m.getSource());
                 }
-
                 try {
                     protoController.joinack(getApelido());
                 

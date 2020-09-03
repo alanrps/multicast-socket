@@ -43,8 +43,8 @@ public class ProtocolController {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(mensagem);
-        oos.close();
         oos.flush();
+        oos.close();
 
         byte[] obj = baos.toByteArray();
         baos.close();
@@ -62,7 +62,9 @@ public class ProtocolController {
     }
 
     public void send(String targetUser, String msg) throws IOException {
-        if(msg.equals("Todos")){
+        System.out.println(targetUser);
+        if(targetUser.equals("Todos")){
+            System.out.println("todos");
             sendMessageGroup(new Message((byte)3, nick, msg));
         }else{
             onlineUsers.containsKey(targetUser);
@@ -94,6 +96,7 @@ public class ProtocolController {
     public void join() throws IOException {
         multicastSocket.setLoopbackMode(false);
         multicastSocket.joinGroup(group);
+        System.out.println("filho das puta");
         Boolean resposta = onlineUsers.containsKey(nick);
         if(resposta != true){
             onlineUsers.put(nick, group);
@@ -122,10 +125,12 @@ public class ProtocolController {
 
     public void receiveMulticastPacket() throws IOException {
         try {
+            System.out.println("recebido");
             byte[] buffer = new byte[1000];
             DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length, group, 6789);
-            // udpSocket.
 
+            multicastSocket.receive(messageIn);
+            
             Message objDescerializado = descerializacao(messageIn);
             System.out.println(objDescerializado.getSource());
 
