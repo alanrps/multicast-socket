@@ -9,7 +9,7 @@ import java.awt.Dimension;
 import java.io.IOException;
 import java.net.*;
 import java.net.DatagramPacket;
-import java.security.acl.Group;
+// import java.security.acl.Group;
 import java.net.InetAddress;
 import java.util.*;
 import javax.swing.DefaultListModel;
@@ -300,7 +300,6 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
             /* obtem o apelido do destinatario */
             String nickTarget = (String)lstLista.getSelectedValue();
             
-            System.out.println(nickTarget);
             try{
                 protoController.send(nickTarget, msg);
             }catch(IOException e){
@@ -402,9 +401,9 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
             case 1:
                 writeLocalMessage("JOIN", m.getSource()); // JOIN [apelido]
                 Boolean verificacao = modelList.contains(m.getSource());
-                if(verificacao != true){
-                    this.addNickname(m.getSource());
-                }
+                // if(verificacao != true){
+                //     this.addNickname(m.getSource());
+                // }
                 try {
                     protoController.joinack(getApelido());
                 
@@ -413,15 +412,18 @@ public class ChatGUI extends javax.swing.JFrame implements UIControl {
                 }
                 break;
             case 2:
-                writeLocalMessage("JOINACK", getApelido()); // JOIN [apelido]
                 verificacao = modelList.contains(m.getSource());
-                if(verificacao != true){
+                if(verificacao != true && (m.getSource()).equals(getApelido()) != true){
+                    System.out.println("hello");
+                    // writeLocalMessage("JOINACK", getApelido()); // JOIN [apelido]
                     this.addNickname(m.getSource());
                 }
                 break;
             case 3:
-                this.writeLocalMessage(m.getSource(), m.getMessage()); //writeMessage
-                break;
+                if(m.getSource().equals(getApelido()) != true){
+                    this.writeMessage(m.getSource(), m.getMessage()); //writeMessage   
+                }
+                break;  
             case 4:
                 
                 this.writeMessage(m.getSource(), m.getMessage());

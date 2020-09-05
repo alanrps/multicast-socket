@@ -11,6 +11,8 @@ import java.net.MulticastSocket;
 import java.util.HashMap;
 import java.util.Properties;
 
+import javax.swing.text.Style;
+
 /**
  * Gerencia o protocolo e o processamento das mensagens
  * 
@@ -19,7 +21,7 @@ import java.util.Properties;
 public class ProtocolController {
 
     private final MulticastSocket multicastSocket;
-    private final DatagramSocket udpSocket;
+    // private final DatagramSocket udpSocket;
     private final InetAddress group;
     private final Integer mport, uport;
     private final String nick;
@@ -34,7 +36,7 @@ public class ProtocolController {
         ui = (UIControl) properties.get("UI");
 
         multicastSocket = new MulticastSocket(mport);
-        udpSocket = new DatagramSocket(uport);
+        // udpSocket = new DatagramSocket(uport);
 
         onlineUsers = new HashMap<>();
         onlineUsers.put("Todos", group);
@@ -62,13 +64,13 @@ public class ProtocolController {
     }
 
     public void send(String targetUser, String msg) throws IOException {
-        System.out.println(targetUser);
         if(targetUser.equals("Todos")){
-            System.out.println("todos");
             sendMessageGroup(new Message((byte)3, nick, msg));
         }else{
-            onlineUsers.containsKey(targetUser);
+            // onlineUsers.containsKey(targetUser);
             InetAddress target = onlineUsers.get(targetUser);
+            // System.out.println(onlineUsers);
+            // System.out.println(target);
             sendMessage(new Message((byte)4, nick, msg), target);
         }
     }
@@ -84,23 +86,22 @@ public class ProtocolController {
     }   
 
     public void joinack(String apelido) throws IOException {
-        // Pacote para multicast
-        Boolean resposta = onlineUsers.containsKey(nick);
+        Boolean resposta = onlineUsers.containsKey(apelido);
         if(resposta != true){
-            onlineUsers.put(nick, group);
+            // onlineUsers.put(apelido, ); 
         }
         byte[] msgBytes = serializacao(new Message((byte)2, apelido, ""));
         processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
     }
 
     public void join() throws IOException {
-        multicastSocket.setLoopbackMode(false);
         multicastSocket.joinGroup(group);
-        System.out.println("filho das puta");
-        Boolean resposta = onlineUsers.containsKey(nick);
-        if(resposta != true){
-            onlineUsers.put(nick, group);
-        }
+        // Boolean resposta = onlineUsers.containsKey(nick);
+        // System.out.println(resposta);
+        // if(resposta != true){
+            // System.out.println(nick);
+            // onlineUsers.put(nick, group);
+        // }
         byte[] msgBytes = serializacao(new Message((byte)1, nick, ""));
         processPacket(new DatagramPacket(msgBytes, msgBytes.length, group, 6789));
         
@@ -112,27 +113,40 @@ public class ProtocolController {
     }
 
     public void close() throws IOException {
-        if (udpSocket != null)
-            udpSocket.close();
+        // if (udpSocket != null)
+        //     udpSocket.close();
         if (multicastSocket != null)
             multicastSocket.close();
         }
 
     public void processPacket(DatagramPacket p) throws IOException {
-        System.out.println("envio pacote");
         multicastSocket.send(p);
+        Message message = new Message(p.getData()); 
+        
+        /* Obtem o apelido de quem enviou a mensagem */
+        String senderNick = message.getSource();
+
+        if (message.getType() == 1) {
+            if(nick.equals(senderNick) == false) {
+                /* Salva o apelido e endereço na lista de usuários ativos */
+                onlineUsers.put(senderNick, p.getAddress());
+            }
+        }
+        else if (message.getType() == 2) {
+            /* Salva o apelido e endereço na lista de suários ativos */
+            onlineUsers.put(senderNick, p.getAddress());
+        }
     }
 
     public void receiveMulticastPacket() throws IOException {
         try {
-            System.out.println("recebido");
             byte[] buffer = new byte[1000];
             DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length, group, 6789);
 
             multicastSocket.receive(messageIn);
             
             Message objDescerializado = descerializacao(messageIn);
-            System.out.println(objDescerializado.getSource());
+            // System.out.println(objDescerializado.getSource());
 
             ui.update(objDescerializado);
 
@@ -140,18 +154,18 @@ public class ProtocolController {
             System.out.println("erro");
         }
     }
-    public void receiveUdpPacket() throws IOException {
-        try {
-            byte[] buffer = new byte[1000];
-            DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length, group, 6799);
-            udpSocket.receive(messageIn);
+    // public void receiveUdpPacket() throws IOException {
+    //     try {
+    //         byte[] buffer = new byte[1000];
+    //         DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length, group, 6799);
+    //         udpSocket.receive(messageIn);
             
-            Message objDescerializado = descerializacao(messageIn);
-            System.out.println(objDescerializado.getSource());
-            ui.update(objDescerializado);
+    //         Message objDescerializado = descerializacao(messageIn);
+    //         System.out.println(objDescerializado.getSource());
+    //         ui.update(objDescerializado);
 
-        } catch (ClassNotFoundException e) {
-            System.out.println("erro");
-        }
-    }
+    //     } catch (ClassNotFoundException e) {
+    //         System.out.println("erro");
+    //     }
+    // }
 }

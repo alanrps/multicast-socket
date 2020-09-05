@@ -8,7 +8,8 @@ import java.io.IOException;
  */
 public class Listener extends Thread {
 
-    Thread multicastListener, udpListener;
+    Thread multicastListener;
+    // udpListener;
     ProtocolController protoController;
 
     /* Construtor */
@@ -30,20 +31,20 @@ public class Listener extends Thread {
         });
 
         /* thread para receber pacotes via UDP */
-        udpListener = new Thread(() -> {
-            try {
-                while (true) {
-                    protoController.receiveUdpPacket();
-                }
-            } catch (IOException ex) {
-                System.out.println(ex);
-            }
+        // udpListener = new Thread(() -> {
+        //     try {
+        //         while (true) {
+        //             protoController.receiveUdpPacket();
+        //         }
+        //     } catch (IOException ex) {
+        //         System.out.println(ex);
+        //     }
 
-        });
+        // });
 
         /* inicialiar as threads */
         multicastListener.start();
-        udpListener.start();
+        // udpListener.start();
 
         try {
             Thread.sleep(1000);

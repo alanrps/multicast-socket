@@ -1,4 +1,3 @@
-
 /**
  * Interface para implementar a atualização da UI
  * @author rodrigo
