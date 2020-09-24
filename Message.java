@@ -7,9 +7,9 @@ import java.io.Serializable;
 
 public class Message implements Serializable{
     
-    private final byte type;           // tipo da mensagem 
-    private final String source;       // origem (apelido)
-    private final String message;      // conteudo da mensagem
+    private  byte type;           // tipo da mensagem 
+    private  String source;       // origem (apelido)
+    private  String message;      // conteudo da mensagem
 
     
     /* Construtor 1 */
@@ -35,7 +35,7 @@ public class Message implements Serializable{
      * byte 0 = tipo da mensagem
      * byte 1 = tamanho apelido
      * byte 2 a 2+tamanho apelido = apelido
-     * byte 2+tamalho apelido a final = mensagem
+     * byte 2+tamalho apelido a  = mensagem
      * @return formato da mensagem em array de bytes
      */
     public byte[] getBytes() {

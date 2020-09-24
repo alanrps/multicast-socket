@@ -1,0 +1,28 @@
+Guia do projeto em java:
+javac *.java --> Faz a compilação do projeto
+
+java ChatGUI sim --> Executa chat com as mensagens criptografadas
+
+java ChatGUI nao --> Executa chat sem criptografia
+
+-Necessário colocar argumento na execução.
+-O argumento especifica se a troca de mensagens será criptografada ou não.
+-----------------------------------------------------------------------------------------------------------------------------------------
+Algoritmo de Criptografia:
+
+Nesta Atividade foi utilizado o algoritmo AES, este é um algoritmo que utiliza criptografia de 
+chave simétrica e ele foi o escolhido por ser um algoritmo bem popular e ter bastante conteúdo
+disponível na internet.
+
+Descrição do processo:
+
+Basicamente foram usados 3 métodos para fazer o tópico de criptografia em Java. 
+1 º É responsável pela configuração da secretKey, está que foi escolhida por mim mesmo.
+2 º É responsável por inicializar o algoritmo AES em encrypt_mode. É necessário a secretKey(chave) neste passo, para que se consiga fazer
+a criptografia dos bytes da mensagem recebida. 
+3 º O último método é responsável por descriptografar novamente o pacote inicial, este método necessita da secretKey(chave) utilizada para criptografar o conteúdo inicialmente e neste caso o algoritmo precisa ser iniciado no modo decrypt_mode, para por fim retornar o pacote descriptografado.
+-----------------------------------------------------------------------------------------------------------------------------------------
+Método atoi:
+Após alguns problemas com os métodos do java utilizados para fazer a conversão de uma String para um número inteiro, foi seleceionado um 
+método que faz isso.
+
